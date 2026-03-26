@@ -39,7 +39,19 @@ func NewLogger(cfg config.ExtraConfig, ws ...io.Writer) (logging.Logger, error) 
 	}
 	serviceName := "KRAKEND"
 	gologging.DefaultPattern = loggingPattern
-	if tmp, ok := cfg[gologging.Namespace]; ok {
+
+	// creating a copy of the config to avoid changing the original one
+	c, err := json.Marshal(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	var cfgCopy config.ExtraConfig
+	if err := json.Unmarshal(c, &cfgCopy); err != nil {
+		return nil, err
+	}
+
+	if tmp, ok := cfgCopy[gologging.Namespace]; ok {
 		if section, ok := tmp.(map[string]interface{}); ok {
 			if tmp, ok = section["prefix"]; ok {
 				if v, ok := tmp.(string); ok {
@@ -50,7 +62,7 @@ func NewLogger(cfg config.ExtraConfig, ws ...io.Writer) (logging.Logger, error) 
 		}
 	}
 
-	loggr, err := gologging.NewLogger(cfg, ws...)
+	loggr, err := gologging.NewLogger(cfgCopy, ws...)
 	if err != nil {
 		return nil, err
 	}
